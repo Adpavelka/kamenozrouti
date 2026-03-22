@@ -7,7 +7,7 @@
 
 
 int main() {
-    Board start = initialBoard();
+    Board start = initialBoard3();
 
     std::cout << "Start board:\n";
     printBoard(start);
