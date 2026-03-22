@@ -1,0 +1,32 @@
+#ifndef SOLVER_H
+#define SOLVER_H
+
+#include <future>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
+
+#include "node.h"
+#include "zobrist.h"
+
+class Solver {
+    int beamWidth;
+    int threads;
+    Zobrist Z;
+
+    std::vector<Node> expandNode(const Node& st,
+                                 std::unordered_map<uint64_t,int>& tt,
+                                 std::mutex& tt_mutex);
+
+    void integrateResults(std::vector<Node>& dst,
+                          std::future<std::vector<Node>>& fut);
+
+    void pruneBeam(std::vector<Node>& all);
+    void updateBest(Node& curBest, const std::vector<Node>& beam);
+
+public:
+    Solver(int beamWidth, int threads);
+    Node solve(const Board &start);
+};
+
+#endif
