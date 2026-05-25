@@ -9,6 +9,7 @@ static constexpr int W = 20;
 static constexpr int COLORS = 5;       
 static constexpr int BEAM_WIDTH = 200000;
 static constexpr int MAX_CHILDREN = 800000;
+static constexpr int EXACT_THRESHOLD = 12;
 
 static const int THREADS =
     std::thread::hardware_concurrency() ?

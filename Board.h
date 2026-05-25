@@ -5,14 +5,14 @@
 #include "config.h"
 
 struct Board {
-    std::array<int, H * W> a;
+    std::array<int8_t, H * W> a;
     Board() { a.fill(-1); }
 
-    inline int& at(int r, int c) {
+    inline int8_t& at(int r, int c) {
         return a[r * W + c];
     }
 
-    inline int at(int r, int c) const {
+    inline int8_t at(int r, int c) const {
         return a[r * W + c]; 
     }
 

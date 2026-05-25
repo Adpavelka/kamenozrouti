@@ -79,9 +79,7 @@ void Solver::updateBest(Node& best, const std::vector<Node>& beam) {
     for (auto &c : beam) {
         if (c.score > best.score) {
             best = c;
-            if (best.score % 200 < c.score % 200) {
-                best.printing(arena);
-            }
+            best.printing(arena);
         }
     }
 }
@@ -100,7 +98,7 @@ Node Solver::solve(const Board &start) {
         tt.reserve(beamWidth * 2);
 
         std::vector<Node> all;
-        all.reserve(std::min((int)beam.size() * 16, beamWidth * 8));
+        all.reserve(beamWidth * 2);
 
         std::vector<std::future<std::vector<Node>>> futures;
         int numThreads = pool.size();
@@ -128,8 +126,20 @@ Node Solver::solve(const Board &start) {
         }
 
         // 2. Collect results
-        for (auto &f : futures) {
-            integrateResults(all, f);
+        for (auto& f : futures) {
+            auto partial = f.get();
+            for (auto& c : partial)
+                all.push_back(std::move(c));
+
+            if ((int)all.size() > beamWidth * 4) {
+                std::nth_element(
+                    all.begin(),
+                    all.begin() + beamWidth,
+                    all.end(),
+                    [](auto& a, auto& b){ return a.key > b.key; }
+                );
+                all.resize(beamWidth);
+            }
         }
 
         if (all.empty()) {

@@ -5,6 +5,7 @@
 
 int getScore(int n);
 long long heuristicEstimate(const Board &b);
+long long upperBound(const Board& b);
 Board randomBoard(int seed = -1);
 Board initialBoard();
 Board initialBoard2();

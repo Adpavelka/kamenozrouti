@@ -7,17 +7,6 @@ Node::Node() : score(0), hash(0), moveIdx(-1), key(0) {}
 Node::Node(Board b, int s, uint64_t h, int mi)
     : board(std::move(b)), score(s), hash(h), moveIdx(mi), key(s) {}
 
-Node& Node::operator=(const Node &o) {
-    if (this != &o) {
-        board = o.board;
-        score = o.score;
-        hash = o.hash;
-        moveIdx = o.moveIdx;
-        key = o.key;
-    }
-    return *this;
-}
-
 void Node::addHeuristic(long long future_score) {
     key += future_score;
 }

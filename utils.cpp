@@ -9,17 +9,13 @@
 int getScore(int n) {
     return (n - 1) * (n - 2) + 2; }
 
-long long heuristicEstimate(const Board &b) {
-    std::array<int, COLORS> largest{};
-    largest.fill(0);
-
+long long heuristicEstimate(const Board& b) {
     std::array<int, H * W> visited{};
     visited.fill(0);
-    int mark {1};
+    int mark = 1;
+    long long est = 0;
 
-    // std::vector<int> comps;
-
-    for (int idx {}; idx < H * W; ++idx) {
+    for (int idx = 0; idx < H * W; ++idx) {
         if (b.a[idx] < 0 || visited[idx]) {
             continue;
         }
@@ -29,45 +25,42 @@ long long heuristicEstimate(const Board &b) {
         q.push_back(idx);
         visited[idx] = mark;
 
-        size_t qi {};
+        size_t qi = 0;
         while (qi < q.size()) {
             int cur = q[qi++];
             auto [cr, cc] = idxToRC(cur);
-            for (const auto &d : DIRS) {
-                int nr = cr + d.dr;
-                int nc = cc + d.dc;
-                if (nr < 0 || nr >= H || nc < 0 || nc >= W){
-                    continue;
-                }
-
-                int ni = rcToIndex(nr,nc);
-                if (visited[ni] || b.a[ni] != col) {
-                    continue;
-                }
-
+            for (const auto& d : DIRS) {
+                int nr = cr + d.dr, nc = cc + d.dc;
+                if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+                int ni = rcToIndex(nr, nc);
+                if (visited[ni] || b.a[ni] != col) continue;
                 visited[ni] = mark;
                 q.push_back(ni);
             }
         }
         ++mark;
 
-        largest[col] = std::max(largest[col], (int) q.size());
-        // comps.push_back((int)q.size());
+        long long sz = (long long)q.size();
+        if (sz >= 2) {
+            est += sz * sz;
+        }
     }
-
-    long long est {};
-    for (int c {}; c < COLORS; ++c) {
-        est += 1LL * largest[c] * largest[c];
-    }
-
-    /*
-    int limit = std::min<int>(10, (int)comps.size());
-    for (int i {}; i < limit; ++i) {
-        est += comps[i] * comps[i];
-    }
-    */
-
     return est;
+}
+
+
+long long upperBound(const Board& b) {
+    std::array<int, COLORS> counts{};
+    for (int i = 0; i < H * W; ++i) {
+        if (b.a[i] >= 0) {
+            ++counts[b.a[i]];
+        }
+    }
+    long long ub = 0;
+    for (int c = 0; c < COLORS; ++c) {
+        if (counts[c] >= 2) ub += getScore(counts[c]);
+    }
+    return ub;
 }
 
 
