@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "move_arena.h"
 #include "node.h"
 #include "zobrist.h"
 
@@ -13,6 +14,7 @@ class Solver {
     int beamWidth;
     int threads;
     Zobrist Z;
+    MoveArena arena;
 
     std::vector<Node> expandNode(const Node& st,
                                  std::unordered_map<uint64_t,int>& tt,
@@ -27,6 +29,10 @@ class Solver {
 public:
     Solver(int beamWidth, int threads);
     Node solve(const Board &start);
+
+    const MoveArena& getArena() const {
+        return arena;
+    }
 };
 
 #endif

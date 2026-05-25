@@ -5,22 +5,23 @@
 #include <vector>
 
 #include "component.h"
+#include "move_arena.h"
 #include "utils.h"
 
 struct Node {
     Board board;
     int score;
     uint64_t hash;
-    std::vector<int> moves;
+    int moveIdx;     // index into MoveArena, -1 if root
     long long key;
 
     Node();
-    Node(Board b, int s, uint64_t h, std::vector<int> mv);
-    Node(const Node &other);
-    Node& operator=(const Node &other);
+    Node(Board b, int s, uint64_t h, int moveIdx);
+    Node(const Node&) = default;
+    Node& operator=(const Node&) = default;
 
     void addHeuristic(long long future_score);
-    void printing() const;
+    void printing(const MoveArena& arena) const;
 };
 
 #endif

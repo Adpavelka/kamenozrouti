@@ -22,7 +22,7 @@ int main() {
 
     std::cout << "Best score found: " << best.score
               << " time: " << elapsed << "s\n";
-    best.printing();
+    best.printing(solver.getArena());
 
     std::cout << "Press ENTER to exit...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

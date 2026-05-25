@@ -38,12 +38,12 @@ std::vector<Node> Solver::expandNode(
             tt[h] = newScore;
         }
 
-        std::vector<int> newMoves = st.moves;
+        int newMoveIdx = -1;
         if (!comp.cells.empty()) {
-            newMoves.push_back(comp.cells.front());
+            newMoveIdx = arena.add(comp.cells.front(), st.moveIdx);
         }
 
-        local.emplace_back(nb, newScore, h, std::move(newMoves));
+        local.emplace_back(nb, newScore, h, newMoveIdx);
         local.back().addHeuristic( heuristicEstimate(nb) );
 
         if ((int)local.size() >= MAX_CHILDREN)
@@ -78,11 +78,9 @@ void Solver::pruneBeam(std::vector<Node>& all) {
 void Solver::updateBest(Node& best, const std::vector<Node>& beam) {
     for (auto &c : beam) {
         if (c.score > best.score) {
-            if (best.score / 200 < c.score / 200) {
-                best = c;
-                best.printing();
-            } else {
-                best = c;
+            best = c;
+            if (best.score % 200 < c.score % 200) {
+                best.printing(arena);
             }
         }
     }
@@ -92,23 +90,36 @@ Node Solver::solve(const Board &start) {
     std::unordered_map<uint64_t,int> tt;
     std::mutex tt_mutex;
 
-    Node st0{ start, 0, Z.hash(start), {}};
+    Node st0{ start, 0, Z.hash(start), -1};
     std::vector<Node> beam{st0};
     Node best;
 
     while (!beam.empty()) {
+        tt.clear();
+        tt.reserve(beamWidth * 2);
+
         std::vector<Node> all;
-        all.reserve(beam.size() * 16);
+        all.reserve(std::min((int)beam.size() * 16, beamWidth * 8));
 
         std::vector<std::future<std::vector<Node>>> futures;
-        futures.reserve(beam.size());
+        int chunkSize = std::max(1, (int)beam.size() / threads);
 
-        // 1. Expand all nodes asynchronously
-        for (auto st : beam) {
-            futures.push_back(std::async(
-                std::launch::async,
-                [this, st, &tt, &tt_mutex]() {
-                    return expandNode(st, tt, tt_mutex);
+        for (int t = 0; t < threads; ++t) {
+            int lo = t * chunkSize;
+            int hi = (t == threads - 1)
+                     ? (int)beam.size()
+                     : std::min(lo + chunkSize, (int)beam.size());
+            if (lo >= (int)beam.size()) break;
+
+            futures.push_back(std::async(std::launch::async,
+                [this, lo, hi, &beam, &tt, &tt_mutex]() {
+                    std::vector<Node> local;
+                    for (int i = lo; i < hi; ++i) {
+                        auto children = expandNode(beam[i], tt, tt_mutex);
+                        for (auto& c : children)
+                            local.push_back(std::move(c));
+                    }
+                    return local;
                 }
             ));
         }
