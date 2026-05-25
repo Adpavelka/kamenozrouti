@@ -125,27 +125,35 @@ Node Solver::solve(const Board &start) {
 
 
         {
-            auto comps = extractComponents(beam.front().board);
-            if ((int)comps.size() <= EXACT_THRESHOLD) {
-                std::cout << "[Exact] Switching to DFS with "
-                          << comps.size() << " components remaining, "
-                          << "current score " << beam.front().score << "\n"
-                          << std::flush;
+            int remaining = 0;
+            for (int x : beam.front().board.a)
+                if (x >= 0) remaining++;
+
+            if (remaining <= EXACT_TILE_THRESHOLD) {
+                auto comps = extractComponents(beam.front().board);
+                std::cout << "[Exact] " << remaining << " tiles, "
+                        << comps.size() << " components, "
+                        << "top score " << beam.front().score << "\n"
+                        << std::flush;
 
                 int exactBestScore   = best.score;
                 int exactBestMoveIdx = best.moveIdx;
 
                 for (auto& node : beam) {
+                    if (node.score + upperBound(node.board) <= exactBestScore) {
+                        continue;
+                    }
                     exactSolve(node.board, node.score, node.moveIdx, exactBestScore, exactBestMoveIdx);
                 }
 
                 if (exactBestScore > best.score) {
                     best.score   = exactBestScore;
                     best.moveIdx = exactBestMoveIdx;
-                    std::cout << "[Exact] Solved: " << best.score << "  ";
-                    best.printing(arena);
                 }
-                
+
+                std::cout << "[Exact] Solved: " << best.score << "  ";
+                best.printing(arena);
+
                 break;
             }
         }
