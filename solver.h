@@ -27,6 +27,8 @@ class Solver {
     void pruneBeam(std::vector<Node>& all);
     void updateBest(Node& curBest, const std::vector<Node>& beam);
 
+    void exactSolve(const Board& b, int score, int parentIdx, int& bestScore, int& bestMoveIdx);
+
 public:
     Solver(int beamWidth, int threads);
     Node solve(const Board &start);

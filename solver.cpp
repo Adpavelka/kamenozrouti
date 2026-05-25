@@ -84,6 +84,32 @@ void Solver::updateBest(Node& best, const std::vector<Node>& beam) {
     }
 }
 
+void Solver::exactSolve(const Board& b, int score, int parentIdx, int& bestScore, int& bestMoveIdx) {
+    if (score + upperBound(b) <= bestScore) {
+        return;
+    }
+
+    auto comps = extractComponents(b);
+
+    if (comps.empty()) {
+        if (score > bestScore) {
+            bestScore    = score;
+            bestMoveIdx  = parentIdx;
+        }
+        return;
+    }
+
+    // Order largest first — finds good solutions early, improves pruning
+    std::sort(comps.begin(), comps.end(),
+              [](auto& a, auto& b){ return a.size > b.size; });
+
+    for (auto& comp : comps) {
+        int mi = arena.add(comp.cells.front(), parentIdx);
+        exactSolve(applyMove(b, comp), score + getScore(comp.size), mi, bestScore, bestMoveIdx);
+    }
+}
+
+
 Node Solver::solve(const Board &start) {
     std::unordered_map<uint64_t, int> tt;
     tt.reserve(beamWidth * 2);
@@ -96,6 +122,34 @@ Node Solver::solve(const Board &start) {
     while (!beam.empty()) {
         tt.clear();
         tt.reserve(beamWidth * 2);
+
+
+        {
+            auto comps = extractComponents(beam.front().board);
+            if ((int)comps.size() <= EXACT_THRESHOLD) {
+                std::cout << "[Exact] Switching to DFS with "
+                          << comps.size() << " components remaining, "
+                          << "current score " << beam.front().score << "\n"
+                          << std::flush;
+
+                int exactBestScore   = best.score;
+                int exactBestMoveIdx = best.moveIdx;
+
+                for (auto& node : beam) {
+                    exactSolve(node.board, node.score, node.moveIdx, exactBestScore, exactBestMoveIdx);
+                }
+
+                if (exactBestScore > best.score) {
+                    best.score   = exactBestScore;
+                    best.moveIdx = exactBestMoveIdx;
+                    std::cout << "[Exact] Solved: " << best.score << "  ";
+                    best.printing(arena);
+                }
+                
+                break;
+            }
+        }
+
 
         std::vector<Node> all;
         all.reserve(beamWidth * 2);
