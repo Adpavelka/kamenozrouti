@@ -4,7 +4,7 @@
 #include <iostream>
 
 Solver::Solver(int bw, int th)
-    : beamWidth(bw), threads(th), Z() {}
+    : beamWidth(bw), pool(th), Z() {}
 
 std::vector<Node> Solver::expandNode(
     const Node& st,
@@ -87,7 +87,8 @@ void Solver::updateBest(Node& best, const std::vector<Node>& beam) {
 }
 
 Node Solver::solve(const Board &start) {
-    std::unordered_map<uint64_t,int> tt;
+    std::unordered_map<uint64_t, int> tt;
+    tt.reserve(beamWidth * 2);
     std::mutex tt_mutex;
 
     Node st0{ start, 0, Z.hash(start), -1};
@@ -102,16 +103,18 @@ Node Solver::solve(const Board &start) {
         all.reserve(std::min((int)beam.size() * 16, beamWidth * 8));
 
         std::vector<std::future<std::vector<Node>>> futures;
-        int chunkSize = std::max(1, (int)beam.size() / threads);
+        int numThreads = pool.size();
+        int chunkSize  = std::max(1, (int)beam.size() / numThreads);
 
-        for (int t = 0; t < threads; ++t) {
+        for (int t = 0; t < numThreads; ++t) {
             int lo = t * chunkSize;
-            int hi = (t == threads - 1)
+            int hi = (t == numThreads - 1)
                      ? (int)beam.size()
                      : std::min(lo + chunkSize, (int)beam.size());
             if (lo >= (int)beam.size()) break;
 
-            futures.push_back(std::async(std::launch::async,
+            // pool.enqueue instead of std::async
+            futures.push_back(pool.enqueue(
                 [this, lo, hi, &beam, &tt, &tt_mutex]() {
                     std::vector<Node> local;
                     for (int i = lo; i < hi; ++i) {

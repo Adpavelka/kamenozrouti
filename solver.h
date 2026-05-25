@@ -8,11 +8,12 @@
 
 #include "move_arena.h"
 #include "node.h"
+#include "thread_pool.h"
 #include "zobrist.h"
 
 class Solver {
     int beamWidth;
-    int threads;
+    ThreadPool pool;
     Zobrist Z;
     MoveArena arena;
 
