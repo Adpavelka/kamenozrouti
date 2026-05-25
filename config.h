@@ -7,8 +7,8 @@
 static constexpr int H = 10;           
 static constexpr int W = 20;           
 static constexpr int COLORS = 5;       
-static constexpr int BEAM_WIDTH = 1500000;
-static constexpr int MAX_CHILDREN = 6000000;
+static constexpr int BEAM_WIDTH = 200000;
+static constexpr int MAX_CHILDREN = 800000;
 
 static const int THREADS =
     std::thread::hardware_concurrency() ?
